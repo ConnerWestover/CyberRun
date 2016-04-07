@@ -85,7 +85,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 		reflect(-dirToCamera, input.normal));
 
 	// Combine lights
-	float4 surfaceColor = (PointLightColor * pointNdotL * diffuseColor) + (DirLightColor * dirNdotL * diffuseColor) + float4(spec.xxx, 1);
+	float4 surfaceColor = (PointLightColor * pointNdotL * diffuseColor)* (PointLightColor.w*10.0f) + (DirLightColor * dirNdotL * diffuseColor)* (DirLightColor.w*10.0f) + float4(spec.xxx, 1);
 
 	return lerp(reflectionColor, surfaceColor, 1.0f);
 }

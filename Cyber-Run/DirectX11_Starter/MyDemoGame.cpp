@@ -29,6 +29,10 @@
 // For the DirectX Math library
 using namespace DirectX;
 
+float playerX =0;
+bool ATrigger = false;
+bool DTrigger = false;
+
 
 #pragma region Win32 Entry Point (WinMain)
 // --------------------------------------------------------
@@ -155,23 +159,42 @@ void MyDemoGame::CreateGeometry()
     XMFLOAT4 yellow = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
 
     
-    Mesh* sphereMesh = new Mesh("sphere.obj", device);
-    Mesh* helixMesh = new Mesh("helix_better_uvs.obj", device);
-    Mesh* cubeMesh = new Mesh("cube.obj", device);
-
-    meshes.push_back(cubeMesh);
-    meshes.push_back(helixMesh);
-    meshes.push_back(sphereMesh);
+    Mesh* player = new Mesh("MaleLow.obj", device);
+    Mesh* floor = new Mesh("cube.obj", device);
+	
+    meshes.push_back(player);
+    meshes.push_back(floor);
 
     // Make some entities
-    GameEntity* sphere = new GameEntity(sphereMesh);
-    GameEntity* helix = new GameEntity(helixMesh);
-    GameEntity* cube = new GameEntity(cubeMesh);
-    entities.push_back(cube);
-    entities.push_back(helix);
-    entities.push_back(sphere);
-	
-    currentEntity = 0;
+    GameEntity* person = new GameEntity(player);
+    GameEntity* ground = new GameEntity(floor);
+
+	entities.push_back(ground);
+    entities.push_back(person);
+   
+	for (int i = 0; i < 20; i++)
+	{	
+		Mesh* sphere = new Mesh("sphere.obj", device);
+		meshes.push_back(sphere);
+		GameEntity* collectMe = new GameEntity(sphere);
+		int x = rand() % 3;
+		switch (x)
+		{
+			case 0:
+				collectMe->SetPosition(-.75f, 0.0f, 2.0f * i);
+				break;
+			case 1:
+				collectMe->SetPosition(0.0f, 0.0f, 2.0f * i);
+				break;
+			case 2:
+				collectMe->SetPosition(.75f, 0.0f, 2.0f * i);
+				break;
+			default:
+				collectMe->SetPosition(0.0f, 0.0f, 2.0f * i);
+				break;
+		}
+		entities.push_back(collectMe);
+	}
 }
 
 // --------------------------------------------------------
@@ -200,8 +223,8 @@ void MyDemoGame::LoadShaders()
 	ppPS->LoadShaderFile(L"BlurPS.cso");
 
     // Set up texture stuff
-    DirectX::CreateWICTextureFromFile(device, deviceContext, L"rock.jpg", 0, &texture);
-	DirectX::CreateWICTextureFromFile(device, deviceContext, L"rockNormals.jpg", 0, &normalMap);
+    DirectX::CreateWICTextureFromFile(device, deviceContext, L"grid.jpg", 0, &texture);
+	DirectX::CreateWICTextureFromFile(device, deviceContext, L"gridNormals.jpg", 0, &normalMap);
 	DirectX::CreateDDSTextureFromFile(device, deviceContext, L"SunnyCubeMap.dds", 0, &skyTexture);
 
     // Create the sampler
@@ -307,18 +330,50 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
 
-    
-    //entities[currentEntity]->SetPosition(sin(totalTime) * 2, 0, 0);
-	entities[currentEntity]->SetPosition(0.0f, -2.0f, 245.0f);
-	entities[currentEntity]->SetScale(5.0f, 1.0f, 500.0f);
-    //entities[currentEntity]->SetRotation(0, totalTime * 0.2f, 0);
-    entities[currentEntity]->UpdateWorldMatrix();
+	entities[0]->SetPosition(0.0f, -2.0f, 495.0f - (totalTime * 2));
+	entities[0]->SetScale(3.0f, 2.0f, 1000.0f);
+	entities[0]->UpdateWorldMatrix();
 
-    // Check for entity swap
-    bool currentSpacebar = (GetAsyncKeyState(VK_TAB) & 0x8000) != 0;
-    if (currentSpacebar && !prevSpaceBar)
-        currentEntity = (currentEntity + 1) % entities.size();
-    prevSpaceBar = currentSpacebar;
+	entities[1]->SetPosition(playerX, -1.0f, -3.0f);
+	entities[1]->SetScale(.05f, .05f, .05f);
+	entities[1]->UpdateWorldMatrix();
+
+	if (GetKeyState('A') & 0x8000) { 
+		ATrigger = true;
+	}
+	if (ATrigger && !(GetKeyState('A') & 0x8000)) {
+		playerX = (playerX - .75f);
+		if (playerX <= -.75f) {
+			playerX = -.75f;
+		}
+		ATrigger = false;
+	}
+	if (GetKeyState('D') & 0x8000) {
+		DTrigger = true;
+	}
+	if (DTrigger && !(GetKeyState('D') & 0x8000)) {
+		playerX = (playerX + .75f);
+		if (playerX >= .75f) {
+			playerX = .75f;
+		}
+		DTrigger = false;
+	}
+    
+	for (int i = 2; i < entities.size(); i++)
+	{
+		XMFLOAT3 pos = entities[i]->position;
+		
+		entities[i]->SetPosition(pos.x, -.5f, (pos.z - (deltaTime *2)));
+		entities[i]->SetScale(.1f, .1f, .1f);
+		if (pos.z <= -2.8f && pos.x == playerX) {
+			//TODO: Add Point to Score
+			entities[i]->SetPosition(pos.x, -.5f, 40.0f);
+		}
+		else if (pos.z <= -3.0f) {
+			entities[i]->SetPosition(pos.x, -.5f, 40.0f);
+		}
+		entities[i]->UpdateWorldMatrix();
+	}
 
 	// Update the camera
 	camera->Update(deltaTime);
@@ -346,103 +401,111 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f,
 		0);
+	for (int i = 0; i < entities.size(); i++)
+	{
+		//Object code
+		GameEntity* ge = entities[i];
+		ID3D11Buffer* vb = ge->GetMesh()->GetVertexBuffer();
+		ID3D11Buffer* ib = ge->GetMesh()->GetIndexBuffer();
+
+		// Set buffers in the input assembler
+		UINT stride = sizeof(Vertex);
+		UINT offset = 0;
+		deviceContext->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+		deviceContext->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+
+		vertexShader->SetMatrix4x4("world", *ge->GetWorldMatrix());
+		vertexShader->SetMatrix4x4("view", camera->GetView());
+		vertexShader->SetMatrix4x4("projection", camera->GetProjection());
+
+		// Pass in some light data to the pixel shader
+		pixelShader->SetFloat3("DirLightDirection", XMFLOAT3(0, -1, 0));
+		pixelShader->SetFloat4("DirLightColor", XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+
+		pixelShader->SetFloat3("PointLightPosition", XMFLOAT3(0, 2, 0));
+		pixelShader->SetFloat4("PointLightColor", XMFLOAT4(0.3f, 0.3f, 1.0f, 0.0f));
+
+		pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
+
+		pixelShader->SetShaderResourceView("diffuse", texture);
+		pixelShader->SetShaderResourceView("normalMap", normalMap);
+		pixelShader->SetShaderResourceView("skyTexture", skyTexture);
+		pixelShader->SetSamplerState("trilinear", sampler);
+
+		vertexShader->SetShader(true);
+		pixelShader->SetShader(true);
+
+		// Finally do the actual drawingw
+		deviceContext->DrawIndexed(ge->GetMesh()->GetIndexCount(), 0, 0);
+
+	}
+
+	GameEntity* ge = entities[2];
+	ID3D11Buffer* vb = ge->GetMesh()->GetVertexBuffer();
+	ID3D11Buffer* ib = ge->GetMesh()->GetIndexBuffer();
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	deviceContext->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+	deviceContext->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+
+		// Draw the sky ----------------------------
+		ID3D11Buffer* skyVB = meshes[2]->GetVertexBuffer();
+		ID3D11Buffer* skyIB = meshes[2]->GetIndexBuffer();
+
+		// Set the in the input assembler
+		deviceContext->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
+		deviceContext->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
+
+		// Set up the shaders
+		skyVS->SetMatrix4x4("view", camera->GetView());
+		skyVS->SetMatrix4x4("projection", camera->GetProjection());
+		skyVS->SetShader();
+
+		skyPS->SetShaderResourceView("sky", skyTexture);
+		skyPS->SetShader();
+
+		// Set up states and draw
+		deviceContext->RSSetState(rasterState);
+		deviceContext->OMSetDepthStencilState(depthState, 0);
+		deviceContext->DrawIndexed(meshes[2]->GetIndexCount(), 0, 0);
+
+		// Reset states
+		deviceContext->RSSetState(0);
+		deviceContext->OMSetDepthStencilState(0, 0);
 
 
-    
-    GameEntity* ge = entities[currentEntity];
-    ID3D11Buffer* vb = ge->GetMesh()->GetVertexBuffer();
-    ID3D11Buffer* ib = ge->GetMesh()->GetIndexBuffer();
-
-    // Set buffers in the input assembler
-    UINT stride = sizeof(Vertex);
-    UINT offset = 0;
-    deviceContext->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-    deviceContext->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-
-    vertexShader->SetMatrix4x4("world", *ge->GetWorldMatrix());
-    vertexShader->SetMatrix4x4("view", camera->GetView());
-    vertexShader->SetMatrix4x4("projection", camera->GetProjection());
-
-    // Pass in some light data to the pixel shader
-    pixelShader->SetFloat3("DirLightDirection", XMFLOAT3(1, 0, 0));
-    pixelShader->SetFloat4("DirLightColor", XMFLOAT4(0.8f, 0.8f, 0.8f, 1));
-
-    pixelShader->SetFloat3("PointLightPosition", XMFLOAT3(3, 0, 0));
-    pixelShader->SetFloat4("PointLightColor", XMFLOAT4(0.3f, 0.3f, 1.0f, 1));
-
-    pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
-
-    pixelShader->SetShaderResourceView("diffuse", texture);
-	pixelShader->SetShaderResourceView("normalMap", normalMap);
-	pixelShader->SetShaderResourceView("skyTexture", skyTexture);
-    pixelShader->SetSamplerState("trilinear", sampler);
-
-    vertexShader->SetShader(true);
-    pixelShader->SetShader(true);
-
-    // Finally do the actual drawingw
-    deviceContext->DrawIndexed(ge->GetMesh()->GetIndexCount(), 0, 0);
-   
-
-	// Draw the sky ----------------------------
-	ID3D11Buffer* skyVB = meshes[2]->GetVertexBuffer();
-	ID3D11Buffer* skyIB = meshes[2]->GetIndexBuffer();
-
-	// Set the in the input assembler
-	deviceContext->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
-	deviceContext->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
-
-	// Set up the shaders
-	skyVS->SetMatrix4x4("view", camera->GetView());
-	skyVS->SetMatrix4x4("projection", camera->GetProjection());
-	skyVS->SetShader();
-
-	skyPS->SetShaderResourceView("sky", skyTexture);
-	skyPS->SetShader();
-
-	// Set up states and draw
-	deviceContext->RSSetState(rasterState);
-	deviceContext->OMSetDepthStencilState(depthState, 0);
-	deviceContext->DrawIndexed(meshes[2]->GetIndexCount(), 0, 0);
-
-	// Reset states
-	deviceContext->RSSetState(0);
-	deviceContext->OMSetDepthStencilState(0, 0);
+		// Done with "regular" rendering - swap to post process
+		deviceContext->OMSetRenderTargets(1, &renderTargetView, 0);
+		deviceContext->ClearRenderTargetView(renderTargetView, color);
 
 
-	// Done with "regular" rendering - swap to post process
-	deviceContext->OMSetRenderTargets(1, &renderTargetView, 0);
-	deviceContext->ClearRenderTargetView(renderTargetView, color);
-
-	// Draw the post process
-	ppVS->SetShader();
+		// Draw the post process
+		ppVS->SetShader();
 
 
-	ppPS->SetInt("blurAmount", 0.0f);
-	ppPS->SetFloat("pixelWidth", 1.0f / windowWidth);
-	ppPS->SetFloat("pixelHeight", 1.0f / windowHeight);
-	ppPS->SetShaderResourceView("pixels", ppSRV);
-	ppPS->SetSamplerState("trilinear", sampler);
-	ppPS->SetShader();
+		ppPS->SetInt("blurAmount", 1.5f);
+		ppPS->SetFloat("pixelWidth", 1.0f / windowWidth);
+		ppPS->SetFloat("pixelHeight", 1.0f / windowHeight);
+		ppPS->SetShaderResourceView("pixels", ppSRV);
+		ppPS->SetSamplerState("trilinear", sampler);
+		ppPS->SetShader();
 
-	// Turn off existing vert/index buffers
-	ID3D11Buffer* nothing = 0;
-	deviceContext->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	deviceContext->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
+		// Turn off existing vert/index buffers
+		ID3D11Buffer* nothing = 0;
+		deviceContext->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+		deviceContext->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
 
-	// Finally - DRAW!
-	deviceContext->Draw(3, 0);
+		// Finally - DRAW!
+		deviceContext->Draw(3, 0);
 
-	// Unbind the SRV so the underlying texture isn't bound for
-	// both input and output at the start of next frame
-	ppPS->SetShaderResourceView("pixels", 0);
-
-
-	// Present the buffer
-	//  - Puts the image we're drawing into the window so the user can see it
-	//  - Do this exactly ONCE PER FRAME
-	//  - Always at the very end of the frame
-	HR(swapChain->Present(0, 0));
+		// Unbind the SRV so the underlying texture isn't bound for
+		// both input and output at the start of next frame
+		ppPS->SetShaderResourceView("pixels", 0);
+		// Present the buffer
+		//  - Puts the image we're drawing into the window so the user can see it
+		//  - Do this exactly ONCE PER FRAME
+		//  - Always at the very end of the frame
+		HR(swapChain->Present(0, 0));
 }
 
 #pragma endregion
@@ -459,13 +522,13 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 void MyDemoGame::OnMouseDown(WPARAM btnState, int x, int y)
 {
 	// Save the previous mouse position, so we have it for the future
-	prevMousePos.x = x;
-	prevMousePos.y = y;
+	//prevMousePos.x = x;
+	//prevMousePos.y = y;
 
 	// Caputure the mouse so we keep getting mouse move
 	// events even if the mouse leaves the window.  we'll be
 	// releasing the capture once a mouse button is released
-	SetCapture(hMainWnd);
+	//SetCapture(hMainWnd);
 }
 
 // --------------------------------------------------------
@@ -477,7 +540,7 @@ void MyDemoGame::OnMouseUp(WPARAM btnState, int x, int y)
 {
 	// We don't care about the tracking the cursor outside
 	// the window anymore (we're not dragging if the mouse is up)
-	ReleaseCapture();
+	//ReleaseCapture();
 }
 
 // --------------------------------------------------------
@@ -490,7 +553,7 @@ void MyDemoGame::OnMouseUp(WPARAM btnState, int x, int y)
 void MyDemoGame::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	// Calc differences
-	if (btnState & 0x0001)
+	/*if (btnState & 0x0001)
 	{
 		float xDiff = (x - prevMousePos.x) * 0.005f;
 		float yDiff = (y - prevMousePos.y) * 0.005f;
@@ -499,6 +562,6 @@ void MyDemoGame::OnMouseMove(WPARAM btnState, int x, int y)
 
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;
-	prevMousePos.y = y;
+	prevMousePos.y = y;*/
 }
 #pragma endregion

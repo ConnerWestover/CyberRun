@@ -1,0 +1,20 @@
+﻿  compilation object save succeeded; see C:\Users\ferre\Desktop\CyberRun\Cyber-Run\Release\BlurPS.cso
+  compilation object save succeeded; see C:\Users\ferre\Desktop\CyberRun\Cyber-Run\Release\BlurVS.cso
+  compilation object save succeeded; see C:\Users\ferre\Desktop\CyberRun\Cyber-Run\Release\PixelShader.cso
+  compilation object save succeeded; see C:\Users\ferre\Desktop\CyberRun\Cyber-Run\Release\SkyPS.cso
+  compilation object save succeeded; see C:\Users\ferre\Desktop\CyberRun\Cyber-Run\Release\SkyVS.cso
+  compilation object save succeeded; see C:\Users\ferre\Desktop\CyberRun\Cyber-Run\Release\VertexShader.cso
+  Camera.cpp
+  GameEntity.cpp
+  Mesh.cpp
+  MyDemoGame.cpp
+MyDemoGame.cpp(362): warning C4018: '<': signed/unsigned mismatch
+MyDemoGame.cpp(404): warning C4018: '<': signed/unsigned mismatch
+MyDemoGame.cpp(486): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+  dxerr.cpp
+  DirectXGameCore.cpp
+  SimpleShader.cpp
+  Generating code
+  All 1766 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  DirectX11_Starter.vcxproj -> C:\Users\ferre\Desktop\CyberRun\Cyber-Run\Release\DirectX11_Starter.exe

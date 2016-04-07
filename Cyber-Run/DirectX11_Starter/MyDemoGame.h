@@ -40,7 +40,6 @@ public:
 private:
     // Input and mesh swapping
     bool prevSpaceBar;
-    unsigned int currentEntity;
 
     // Keep track of "stuff"
     std::vector<Mesh*> meshes;
