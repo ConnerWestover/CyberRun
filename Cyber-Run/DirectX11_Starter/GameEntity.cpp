@@ -2,10 +2,12 @@
 
 using namespace DirectX;
 
-GameEntity::GameEntity(Mesh* mesh)
+GameEntity::GameEntity(Mesh* mesh, Material* mat, bool sky)
 {
 	// Save the mesh
 	this->mesh = mesh;
+	this->material = mat;
+	skyBox = sky;
 
 	// Set up transform
 	XMStoreFloat4x4(&worldMatrix, XMMatrixIdentity());
@@ -29,4 +31,12 @@ void GameEntity::UpdateWorldMatrix()
 
 	XMMATRIX total = sc * rotZ * rotY * rotX * trans;
 	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(total));
+}
+
+void GameEntity::Draw(ID3D11DeviceContext * deviceContext, XMFLOAT4X4 viewMatrix, XMFLOAT4X4 projectionMatrix)
+{
+	UpdateWorldMatrix();
+	material->getVert()->SetMatrix4x4("world", worldMatrix);
+	material->prepareMaterial(viewMatrix, projectionMatrix);
+	mesh->Draw(deviceContext,skyBox);
 }

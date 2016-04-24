@@ -2,11 +2,12 @@
 
 #include <DirectXMath.h>
 #include "Mesh.h"
+#include "Material.h"
 
 class GameEntity
 {
 public:
-	GameEntity(Mesh* mesh);
+	GameEntity(Mesh* mesh, Material* mat, bool sky);
 	~GameEntity(void);
 
 	void UpdateWorldMatrix();
@@ -22,13 +23,16 @@ public:
 
 	Mesh* GetMesh() { return mesh; }
 	DirectX::XMFLOAT4X4* GetWorldMatrix() { return &worldMatrix; }
+	void Draw(ID3D11DeviceContext * deviceContext, XMFLOAT4X4 viewMatrix, XMFLOAT4X4 projectionMatrix);
 private:
 
 	Mesh* mesh;
+	Material* material;
 	
 	DirectX::XMFLOAT4X4 worldMatrix;
 	DirectX::XMFLOAT3 rotation;
 	DirectX::XMFLOAT3 scale;
 
+	bool skyBox;
 };
 

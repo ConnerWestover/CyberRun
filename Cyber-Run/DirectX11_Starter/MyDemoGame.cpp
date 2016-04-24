@@ -28,6 +28,7 @@
 
 // For the DirectX Math library
 using namespace DirectX;
+using namespace std;
 
 float playerX =0;
 bool ATrigger = false;
@@ -136,8 +137,8 @@ bool MyDemoGame::Init()
 	// Helper methods to create something to draw, load shaders to draw it 
 	// with and set up matrices so we can see how to pass data to the GPU.
 	//  - For your own projects, feel free to expand/replace these.
-	CreateGeometry();
 	LoadShaders();
+	CreateGeometry();
 	CreateMatrices();
 
 	// Tell the input assembler stage of the pipeline what kind of
@@ -159,24 +160,26 @@ void MyDemoGame::CreateGeometry()
     XMFLOAT4 yellow = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
 
     
-    Mesh* player = new Mesh("MaleLow.obj", device);
-    Mesh* floor = new Mesh("cube.obj", device);
-	
+    Mesh* player = new Mesh("MaleLow.obj", device, rasterState, depthState);
+    Mesh* floor = new Mesh("cube.obj", device, rasterState, depthState);
+	Mesh* sphere = new Mesh("sphere.obj", device, rasterState, depthState);
+
     meshes.push_back(player);
     meshes.push_back(floor);
+	meshes.push_back(sphere);
 
     // Make some entities
-    GameEntity* person = new GameEntity(player);
-    GameEntity* ground = new GameEntity(floor);
+    GameEntity* person = new GameEntity(player, materials[0], false);
+    GameEntity* ground = new GameEntity(floor, materials[0], false);
+	GameEntity* skyBox = new GameEntity(sphere, materials[1], true);
 
 	entities.push_back(ground);
     entities.push_back(person);
+	entities.push_back(skyBox);
    
 	for (int i = 0; i < 20; i++)
 	{	
-		Mesh* sphere = new Mesh("sphere.obj", device);
-		meshes.push_back(sphere);
-		GameEntity* collectMe = new GameEntity(sphere);
+		GameEntity* collectMe = new GameEntity(sphere, materials[0], false);
 		int x = rand() % 3;
 		switch (x)
 		{
@@ -287,6 +290,24 @@ void MyDemoGame::LoadShaders()
 
 	// Get rid of ONE of the texture references
 	ppTexture->Release();
+
+	vector<ID3D11ShaderResourceView*> srvs = { texture,normalMap,skyTexture };
+	vector<string> locs = { "diffuse", "normalMap","skyTexture" };
+	Material* mainMat = new Material(vertexShader, pixelShader, srvs, locs, sampler);
+	srvs.clear();
+	locs.clear();
+	srvs.push_back(skyTexture);
+	locs.push_back("sky");
+	Material* skyMat = new Material(skyVS, skyPS, srvs, locs, sampler);
+	srvs.clear();
+	locs.clear();
+	srvs.push_back(0);
+	locs.push_back("pixels");
+	Material* postProcMat = new Material(ppVS, ppPS, srvs, locs, sampler);
+
+	materials.push_back(mainMat);
+	materials.push_back(skyMat);
+	materials.push_back(postProcMat);
 }
 
 // --------------------------------------------------------
@@ -359,7 +380,7 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 		DTrigger = false;
 	}
     
-	for (int i = 2; i < entities.size(); i++)
+	for (int i = 3; i < entities.size(); i++)
 	{
 		XMFLOAT3 pos = entities[i]->position;
 		
@@ -390,8 +411,6 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 	// Swap to the new render target
 	deviceContext->OMSetRenderTargets(1, &ppRTV, depthStencilView);
 
-
-
 	// Clear the render target and depth buffer (erases what's on the screen)
 	//  - Do this ONCE PER FRAME
 	//  - At the beginning of DrawScene (before drawing *anything*)
@@ -403,109 +422,52 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		0);
 	for (int i = 0; i < entities.size(); i++)
 	{
-		//Object code
-		GameEntity* ge = entities[i];
-		ID3D11Buffer* vb = ge->GetMesh()->GetVertexBuffer();
-		ID3D11Buffer* ib = ge->GetMesh()->GetIndexBuffer();
-
-		// Set buffers in the input assembler
-		UINT stride = sizeof(Vertex);
-		UINT offset = 0;
-		deviceContext->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-		deviceContext->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-
-		vertexShader->SetMatrix4x4("world", *ge->GetWorldMatrix());
-		vertexShader->SetMatrix4x4("view", camera->GetView());
-		vertexShader->SetMatrix4x4("projection", camera->GetProjection());
-
 		// Pass in some light data to the pixel shader
 		pixelShader->SetFloat3("DirLightDirection", XMFLOAT3(0, -1, 0));
 		pixelShader->SetFloat4("DirLightColor", XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
 
 		pixelShader->SetFloat3("PointLightPosition", XMFLOAT3(0, 2, 0));
 		pixelShader->SetFloat4("PointLightColor", XMFLOAT4(0.3f, 0.3f, 1.0f, 0.0f));
-
 		pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
 
-		pixelShader->SetShaderResourceView("diffuse", texture);
-		pixelShader->SetShaderResourceView("normalMap", normalMap);
-		pixelShader->SetShaderResourceView("skyTexture", skyTexture);
-		pixelShader->SetSamplerState("trilinear", sampler);
-
-		vertexShader->SetShader(true);
-		pixelShader->SetShader(true);
-
-		// Finally do the actual drawingw
-		deviceContext->DrawIndexed(ge->GetMesh()->GetIndexCount(), 0, 0);
-
+		entities[i]->Draw(deviceContext, camera->GetView(), camera->GetProjection());
 	}
-
-	GameEntity* ge = entities[2];
-	ID3D11Buffer* vb = ge->GetMesh()->GetVertexBuffer();
-	ID3D11Buffer* ib = ge->GetMesh()->GetIndexBuffer();
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	deviceContext->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-	deviceContext->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
 
-		// Draw the sky ----------------------------
-		ID3D11Buffer* skyVB = meshes[2]->GetVertexBuffer();
-		ID3D11Buffer* skyIB = meshes[2]->GetIndexBuffer();
-
-		// Set the in the input assembler
-		deviceContext->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
-		deviceContext->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
-
-		// Set up the shaders
-		skyVS->SetMatrix4x4("view", camera->GetView());
-		skyVS->SetMatrix4x4("projection", camera->GetProjection());
-		skyVS->SetShader();
-
-		skyPS->SetShaderResourceView("sky", skyTexture);
-		skyPS->SetShader();
-
-		// Set up states and draw
-		deviceContext->RSSetState(rasterState);
-		deviceContext->OMSetDepthStencilState(depthState, 0);
-		deviceContext->DrawIndexed(meshes[2]->GetIndexCount(), 0, 0);
-
-		// Reset states
-		deviceContext->RSSetState(0);
-		deviceContext->OMSetDepthStencilState(0, 0);
+	//POST-PROCESSING
+	// Done with "regular" rendering - swap to post process
+	deviceContext->OMSetRenderTargets(1, &renderTargetView, 0);
+	deviceContext->ClearRenderTargetView(renderTargetView, color);
 
 
-		// Done with "regular" rendering - swap to post process
-		deviceContext->OMSetRenderTargets(1, &renderTargetView, 0);
-		deviceContext->ClearRenderTargetView(renderTargetView, color);
+	// Draw the post process
+	ppVS->SetShader();
 
 
-		// Draw the post process
-		ppVS->SetShader();
+	ppPS->SetInt("blurAmount", 1.5f);
+	ppPS->SetFloat("pixelWidth", 1.0f / windowWidth);
+	ppPS->SetFloat("pixelHeight", 1.0f / windowHeight);
+	ppPS->SetShaderResourceView("pixels", ppSRV);
+	ppPS->SetSamplerState("trilinear", sampler);
+	ppPS->SetShader();
 
+	// Turn off existing vert/index buffers
+	ID3D11Buffer* nothing = 0;
+	deviceContext->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+	deviceContext->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
 
-		ppPS->SetInt("blurAmount", 1.5f);
-		ppPS->SetFloat("pixelWidth", 1.0f / windowWidth);
-		ppPS->SetFloat("pixelHeight", 1.0f / windowHeight);
-		ppPS->SetShaderResourceView("pixels", ppSRV);
-		ppPS->SetSamplerState("trilinear", sampler);
-		ppPS->SetShader();
+	// Finally - DRAW!
+	deviceContext->Draw(3, 0);
 
-		// Turn off existing vert/index buffers
-		ID3D11Buffer* nothing = 0;
-		deviceContext->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-		deviceContext->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-
-		// Finally - DRAW!
-		deviceContext->Draw(3, 0);
-
-		// Unbind the SRV so the underlying texture isn't bound for
-		// both input and output at the start of next frame
-		ppPS->SetShaderResourceView("pixels", 0);
-		// Present the buffer
-		//  - Puts the image we're drawing into the window so the user can see it
-		//  - Do this exactly ONCE PER FRAME
-		//  - Always at the very end of the frame
-		HR(swapChain->Present(0, 0));
+	// Unbind the SRV so the underlying texture isn't bound for
+	// both input and output at the start of next frame
+	ppPS->SetShaderResourceView("pixels", 0);
+	// Present the buffer
+	//  - Puts the image we're drawing into the window so the user can see it
+	//  - Do this exactly ONCE PER FRAME
+	//  - Always at the very end of the frame
+	HR(swapChain->Present(0, 0));
 }
 
 #pragma endregion

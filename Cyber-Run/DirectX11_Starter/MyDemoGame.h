@@ -43,6 +43,7 @@ private:
 
     // Keep track of "stuff"
     std::vector<Mesh*> meshes;
+	std::vector<Material*> materials;
     std::vector<GameEntity*> entities;
 
 	// Initialization for our "game" demo - Feel free to

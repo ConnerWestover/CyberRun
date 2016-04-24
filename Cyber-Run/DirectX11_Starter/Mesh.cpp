@@ -11,8 +11,11 @@ Mesh::Mesh(Vertex* vertArray, int numVerts, unsigned int* indexArray, int numInd
 	CreateBuffers(vertArray, numVerts, indexArray, numIndices, device);
 }
 
-Mesh::Mesh(char* objFile, ID3D11Device* device)
+Mesh::Mesh(char* objFile, ID3D11Device* device,
+	ID3D11RasterizerState* _rasterState, ID3D11DepthStencilState* _depthState)
 {
+	rasterState = _rasterState;
+	depthState = _depthState;
 	// String to hold a single line
 	char chars[512];
 
@@ -257,4 +260,29 @@ void Mesh::CreateBuffers(Vertex* vertArray, int numVerts, unsigned int* indexArr
 
 	// Save the indices
 	this->numIndices = numIndices;
+}
+
+void Mesh::Draw(ID3D11DeviceContext * deviceContext, bool sky)
+{
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	if (!sky)
+	{
+		deviceContext->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+		deviceContext->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+		deviceContext->DrawIndexed(numIndices, 0, 0);
+	}
+	else
+	{
+		deviceContext->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+		deviceContext->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+		
+		deviceContext->RSSetState(rasterState);
+		deviceContext->OMSetDepthStencilState(depthState, 0);
+		deviceContext->DrawIndexed(numIndices, 0, 0);
+
+		// Reset states
+		deviceContext->RSSetState(0);
+		deviceContext->OMSetDepthStencilState(0, 0);
+	}
 }
