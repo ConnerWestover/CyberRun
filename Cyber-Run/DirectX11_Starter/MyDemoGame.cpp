@@ -31,6 +31,7 @@ using namespace DirectX;
 using namespace std;
 
 float playerX =0;
+float bloomAmount = 0;
 bool ATrigger = false;
 bool DTrigger = false;
 
@@ -160,7 +161,7 @@ void MyDemoGame::CreateGeometry()
     XMFLOAT4 yellow = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
 
     
-    Mesh* player = new Mesh("MaleLow.obj", device, rasterState, depthState);
+    Mesh* player = new Mesh("cycle.obj", device, rasterState, depthState);
     Mesh* floor = new Mesh("cube.obj", device, rasterState, depthState);
 	Mesh* sphere = new Mesh("sphere.obj", device, rasterState, depthState);
 
@@ -356,7 +357,8 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 	entities[0]->UpdateWorldMatrix();
 
 	entities[1]->SetPosition(playerX, -1.0f, -3.0f);
-	entities[1]->SetScale(.05f, .05f, .05f);
+	entities[1]->SetScale(0.5f, 0.5f, 0.5f);
+	entities[1]->SetRotation(-3.14f/2.0f, 0.0f, -3.14f / 2.0f);
 	entities[1]->UpdateWorldMatrix();
 
 	if (GetKeyState('A') & 0x8000) { 
@@ -378,6 +380,13 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 			playerX = .75f;
 		}
 		DTrigger = false;
+	}
+
+	if ((GetKeyState('Q') & 0x8000)) {
+		bloomAmount = (bloomAmount + .01f);
+	}
+	if ((GetKeyState('E') & 0x8000)) {
+		bloomAmount = (bloomAmount - .01f);
 	}
     
 	for (int i = 3; i < entities.size(); i++)
@@ -429,6 +438,11 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		pixelShader->SetFloat3("PointLightPosition", XMFLOAT3(0, 2, 0));
 		pixelShader->SetFloat4("PointLightColor", XMFLOAT4(0.3f, 0.3f, 1.0f, 0.0f));
 		pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
+
+		pixelShader->SetFloat("pixelWidth", 1.0f / windowWidth);
+		pixelShader->SetFloat("pixelHeight", 1.0f / windowHeight);
+		pixelShader->SetInt("blurAmount", 1.0f);
+		pixelShader->SetFloat("bloomAmount", .3f);
 
 		entities[i]->Draw(deviceContext, camera->GetView(), camera->GetProjection());
 	}
@@ -484,13 +498,13 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 void MyDemoGame::OnMouseDown(WPARAM btnState, int x, int y)
 {
 	// Save the previous mouse position, so we have it for the future
-	//prevMousePos.x = x;
-	//prevMousePos.y = y;
+	prevMousePos.x = x;
+	prevMousePos.y = y;
 
 	// Caputure the mouse so we keep getting mouse move
 	// events even if the mouse leaves the window.  we'll be
 	// releasing the capture once a mouse button is released
-	//SetCapture(hMainWnd);
+	SetCapture(hMainWnd);
 }
 
 // --------------------------------------------------------
@@ -502,7 +516,7 @@ void MyDemoGame::OnMouseUp(WPARAM btnState, int x, int y)
 {
 	// We don't care about the tracking the cursor outside
 	// the window anymore (we're not dragging if the mouse is up)
-	//ReleaseCapture();
+	ReleaseCapture();
 }
 
 // --------------------------------------------------------
@@ -515,7 +529,7 @@ void MyDemoGame::OnMouseUp(WPARAM btnState, int x, int y)
 void MyDemoGame::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	// Calc differences
-	/*if (btnState & 0x0001)
+	if (btnState & 0x0001)
 	{
 		float xDiff = (x - prevMousePos.x) * 0.005f;
 		float yDiff = (y - prevMousePos.y) * 0.005f;
@@ -524,6 +538,6 @@ void MyDemoGame::OnMouseMove(WPARAM btnState, int x, int y)
 
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;
-	prevMousePos.y = y;*/
+	prevMousePos.y = y;
 }
 #pragma endregion

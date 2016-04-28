@@ -11,6 +11,11 @@ cbuffer LightData : register(b0)
 
 	// Camera position
 	float3 CameraPosition;
+
+	float pixelWidth;
+	float pixelHeight;
+	float blurAmount;
+	float bloomAmount;
 }
 
 
@@ -30,6 +35,7 @@ Texture2D diffuse		: register(t0);
 Texture2D normalMap		: register(t1);
 TextureCube skyTexture	: register(t2);
 SamplerState trilinear	: register(s0);
+Texture2D pixels		: register(t0);
 
 
 // Entry point for this pixel shader
@@ -86,6 +92,13 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 	// Combine lights
 	float4 surfaceColor = (PointLightColor * pointNdotL * diffuseColor)* (PointLightColor.w*10.0f) + (DirLightColor * dirNdotL * diffuseColor)* (DirLightColor.w*10.0f) + float4(spec.xxx, 1);
+
+	if (surfaceColor.x + surfaceColor.y + surfaceColor.z > 1.5f) {
+		surfaceColor.x += bloomAmount;
+		surfaceColor.y += bloomAmount;
+		surfaceColor.z += bloomAmount;
+
+	}
 
 	return lerp(reflectionColor, surfaceColor, 1.0f);
 }

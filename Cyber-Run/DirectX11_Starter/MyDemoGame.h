@@ -73,6 +73,7 @@ private:
 
     // Texture stuff
     ID3D11ShaderResourceView* texture;
+	ID3D11ShaderResourceView* playertexture;
 	ID3D11ShaderResourceView* normalMap;
     ID3D11SamplerState* sampler;
 
