@@ -21,6 +21,7 @@
 //
 // ----------------------------------------------------------------------------
 
+#include <time.h>
 #include "MyDemoGame.h"
 #include "Vertex.h"
 #include "WICTextureLoader.h"
@@ -30,7 +31,6 @@
 using namespace DirectX;
 using namespace std;
 
-float playerX =0;
 bool ATrigger = false;
 bool DTrigger = false;
 
@@ -74,7 +74,7 @@ MyDemoGame::MyDemoGame(HINSTANCE hInstance)
 	// - "Wide" characters take up more space in memory (hence the name)
 	// - This allows for an extended character set (more fancy letters/symbols)
 	// - Lots of Windows functions want "wide characters", so we use the "L"
-	windowCaption = L"My Super Fancy GGP Game";
+	windowCaption = L"CyberRun  Score: 0";
 
 	// Custom window size - will be created by Init() later
 	windowWidth = 800;
@@ -173,30 +173,47 @@ void MyDemoGame::CreateGeometry()
     GameEntity* ground = new GameEntity(floor, materials[0], false);
 	GameEntity* skyBox = new GameEntity(sphere, materials[1], true);
 
-	entities.push_back(ground);
+	platforms.push_back(ground);
+	//platforms.push_back(ground);
     entities.push_back(person);
 	entities.push_back(skyBox);
-   
-	for (int i = 0; i < 20; i++)
+	
+	entities[0]->SetScale(.05f, .05f, .05f);
+
+	for (int i = 0; i < platforms.size(); i++)
+	{
+		platforms[i]->SetPosition(0.0f, -2.0f, 2.5f + (15.0f * totPlatforms));
+		platforms[i]->SetScale(3.0f, 2.0f, 15.0f);
+		platforms[i]->UpdateWorldMatrix();
+		totPlatforms++;
+	}
+
+	pData = playerData{ float3{0.0f, -1.0f, -3.0f}, float3{0.0f,0.0f,1.0f},true,float3{0.0f,0.0f,2.0f} };
+
+	srand(time(NULL));
+
+	for (int i = 0; i < 5; i++)
 	{	
 		GameEntity* collectMe = new GameEntity(sphere, materials[0], false);
+		collectMe->SetScale(0.1f, 0.1f, 0.1f);
 		int x = rand() % 3;
 		switch (x)
 		{
 			case 0:
-				collectMe->SetPosition(-.75f, 0.0f, 2.0f * i);
+				collectMe->SetPosition(-.75f, -0.5f, 2.0f * i);
 				break;
 			case 1:
-				collectMe->SetPosition(0.0f, 0.0f, 2.0f * i);
+				collectMe->SetPosition(0.0f, -0.5f, 2.0f * i);
 				break;
 			case 2:
-				collectMe->SetPosition(.75f, 0.0f, 2.0f * i);
+				collectMe->SetPosition(.75f, -0.5f, 2.0f * i);
 				break;
 			default:
-				collectMe->SetPosition(0.0f, 0.0f, 2.0f * i);
+				collectMe->SetPosition(0.0f, -0.5f, 2.0f * i);
 				break;
 		}
-		entities.push_back(collectMe);
+		collectibles.push_back(collectMe);
+		totCollects++;
 	}
 }
 
@@ -318,6 +335,7 @@ void MyDemoGame::CreateMatrices()
 {
 	camera = new Camera(0, 0, -5);
 	camera->UpdateProjectionMatrix(aspectRatio);
+	camera->setSpeed(2.0f);
 }
 
 #pragma endregion
@@ -351,21 +369,16 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
 
-	entities[0]->SetPosition(0.0f, -2.0f, 495.0f - (totalTime * 2));
-	entities[0]->SetScale(3.0f, 2.0f, 1000.0f);
+	entities[0]->SetPosition(pData.position.x, pData.position.y, pData.position.z);
 	entities[0]->UpdateWorldMatrix();
-
-	entities[1]->SetPosition(playerX, -1.0f, -3.0f);
-	entities[1]->SetScale(.05f, .05f, .05f);
-	entities[1]->UpdateWorldMatrix();
 
 	if (GetKeyState('A') & 0x8000) { 
 		ATrigger = true;
 	}
 	if (ATrigger && !(GetKeyState('A') & 0x8000)) {
-		playerX = (playerX - .75f);
-		if (playerX <= -.75f) {
-			playerX = -.75f;
+		pData.position.x = (pData.position.x - .75f);
+		if (pData.position.x <= -.75f) {
+			pData.position.x = -.75f;
 		}
 		ATrigger = false;
 	}
@@ -373,31 +386,99 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 		DTrigger = true;
 	}
 	if (DTrigger && !(GetKeyState('D') & 0x8000)) {
-		playerX = (playerX + .75f);
-		if (playerX >= .75f) {
-			playerX = .75f;
+		pData.position.x = (pData.position.x + .75f);
+		if (pData.position.x >= .75f) {
+			pData.position.x = .75f;
 		}
 		DTrigger = false;
 	}
     
-	for (int i = 3; i < entities.size(); i++)
+	for (int i = 0; i < collectibles.size(); i++)
 	{
-		XMFLOAT3 pos = entities[i]->position;
-		
-		entities[i]->SetPosition(pos.x, -.5f, (pos.z - (deltaTime *2)));
-		entities[i]->SetScale(.1f, .1f, .1f);
-		if (pos.z <= -2.8f && pos.x == playerX) {
-			//TODO: Add Point to Score
-			entities[i]->SetPosition(pos.x, -.5f, 40.0f);
+		if (collectibles[i]->position.z <= pData.position.z && collectibles[i]->position.z >= (pData.position.z - 0.05f))
+		{
+			if (collectibles[i]->position.x == pData.position.x)
+			{
+				collectibles.erase(collectibles.begin() + i);
+				i--;
+				score++;
+				GameEntity* collectMe = new GameEntity(meshes[2], materials[0], false);
+				collectMe->SetScale(0.1f, 0.1f, 0.1f);
+				int x = rand() % 3;
+				switch (x)
+				{
+				case 0:
+					collectMe->SetPosition(-.75f, -0.5f, 2.0f * totCollects);
+					break;
+				case 1:
+					collectMe->SetPosition(0.0f, -0.5f, 2.0f * totCollects);
+					break;
+				case 2:
+					collectMe->SetPosition(.75f, -0.5f, 2.0f * totCollects);
+					break;
+				default:
+					collectMe->SetPosition(0.0f, -0.5f, 2.0f * totCollects);
+					break;
+				}
+				collectibles.push_back(collectMe);
+				totCollects++;
+			}
+			continue;
 		}
-		else if (pos.z <= -3.0f) {
-			entities[i]->SetPosition(pos.x, -.5f, 40.0f);
+		if (collectibles[i]->position.z <= (pData.position.z - 1.0f))
+		{
+			collectibles.erase(collectibles.begin() + i);
+			i--;
+			GameEntity* collectMe = new GameEntity(meshes[2], materials[0], false);
+			collectMe->SetScale(0.1f, 0.1f, 0.1f);
+			int x = rand() % 3;
+			switch (x)
+			{
+			case 0:
+				collectMe->SetPosition(-.75f, -0.5f, 2.0f * totCollects);
+				break;
+			case 1:
+				collectMe->SetPosition(0.0f, -0.5f, 2.0f * totCollects);
+				break;
+			case 2:
+				collectMe->SetPosition(.75f, -0.5f, 2.0f * totCollects);
+				break;
+			default:
+				collectMe->SetPosition(0.0f, -0.5f, 2.0f * totCollects);
+				break;
+			}
+			collectibles.push_back(collectMe);
+			totCollects++;
 		}
-		entities[i]->UpdateWorldMatrix();
 	}
+
+	if (platforms[0]->position.z - 2.5 <= pData.position.z && platforms.size() == 1)
+	{
+		platforms.push_back(new GameEntity(meshes[1], materials[0], false));
+		platforms[1]->SetPosition(0.0f, -2.0f, 2.5f + (15.0f*totPlatforms));
+		platforms[1]->SetScale(3.0f, 2.0f, 15.0f);
+		platforms[1]->UpdateWorldMatrix();
+		totPlatforms++;
+	}
+	if (platforms.size() == 2)
+	{
+		if (platforms[1]->position.z < pData.position.z)
+		{
+			platforms.erase(platforms.begin());
+		}
+	}
+
+	pData.position.add(pData.forces.mult(deltaTime));
 
 	// Update the camera
 	camera->Update(deltaTime);
+
+	//string orig = "CyberRun    Score: " + score;
+	/*
+	const size_t newsizew = strlen(orig.c_str()) + 1;
+	size_t convertedChars = 0;
+	wchar_t *wcstring = new wchar_t[newsizew];
+	mbstowcs_s(&convertedChars, wcstring, newsizew, orig.c_str(), _TRUNCATE);*/
 }
 
 // --------------------------------------------------------
@@ -431,6 +512,30 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
 
 		entities[i]->Draw(deviceContext, camera->GetView(), camera->GetProjection());
+	}
+	for (int i = 0; i < platforms.size(); i++)
+	{
+		// Pass in some light data to the pixel shader
+		pixelShader->SetFloat3("DirLightDirection", XMFLOAT3(0, -1, 0));
+		pixelShader->SetFloat4("DirLightColor", XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+
+		pixelShader->SetFloat3("PointLightPosition", XMFLOAT3(0, 2, 0));
+		pixelShader->SetFloat4("PointLightColor", XMFLOAT4(0.3f, 0.3f, 1.0f, 0.0f));
+		pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
+
+		platforms[i]->Draw(deviceContext, camera->GetView(), camera->GetProjection());
+	}
+	for (int i = 0; i < collectibles.size(); i++)
+	{
+		// Pass in some light data to the pixel shader
+		pixelShader->SetFloat3("DirLightDirection", XMFLOAT3(0, -1, 0));
+		pixelShader->SetFloat4("DirLightColor", XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+
+		pixelShader->SetFloat3("PointLightPosition", XMFLOAT3(0, 2, 0));
+		pixelShader->SetFloat4("PointLightColor", XMFLOAT4(0.3f, 0.3f, 1.0f, 0.0f));
+		pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
+
+		collectibles[i]->Draw(deviceContext, camera->GetView(), camera->GetProjection());
 	}
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
@@ -484,13 +589,13 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 void MyDemoGame::OnMouseDown(WPARAM btnState, int x, int y)
 {
 	// Save the previous mouse position, so we have it for the future
-	//prevMousePos.x = x;
-	//prevMousePos.y = y;
+	prevMousePos.x = x;
+	prevMousePos.y = y;
 
 	// Caputure the mouse so we keep getting mouse move
 	// events even if the mouse leaves the window.  we'll be
 	// releasing the capture once a mouse button is released
-	//SetCapture(hMainWnd);
+	SetCapture(hMainWnd);
 }
 
 // --------------------------------------------------------
@@ -502,7 +607,7 @@ void MyDemoGame::OnMouseUp(WPARAM btnState, int x, int y)
 {
 	// We don't care about the tracking the cursor outside
 	// the window anymore (we're not dragging if the mouse is up)
-	//ReleaseCapture();
+	ReleaseCapture();
 }
 
 // --------------------------------------------------------
@@ -515,7 +620,7 @@ void MyDemoGame::OnMouseUp(WPARAM btnState, int x, int y)
 void MyDemoGame::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	// Calc differences
-	/*if (btnState & 0x0001)
+	if (btnState & 0x0001)
 	{
 		float xDiff = (x - prevMousePos.x) * 0.005f;
 		float yDiff = (y - prevMousePos.y) * 0.005f;
@@ -524,6 +629,6 @@ void MyDemoGame::OnMouseMove(WPARAM btnState, int x, int y)
 
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;
-	prevMousePos.y = y;*/
+	prevMousePos.y = y;
 }
 #pragma endregion
