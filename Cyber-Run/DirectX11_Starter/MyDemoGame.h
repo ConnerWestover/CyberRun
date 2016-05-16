@@ -47,6 +47,7 @@ private:
     std::vector<GameEntity*> entities;
 	std::vector<GameEntity*> collectibles;
 	std::vector<GameEntity*> platforms;
+	std::vector<GameEntity*> obstacles;
 
 	struct float3 {
 		float x, y, z;
@@ -65,7 +66,6 @@ private:
 	struct playerData {
 		float3 position;
 		float3 forward;
-		bool grounded;
 		float3 forces;
 	};
 

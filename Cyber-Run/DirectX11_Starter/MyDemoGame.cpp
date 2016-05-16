@@ -33,6 +33,8 @@ using namespace std;
 
 bool ATrigger = false;
 bool DTrigger = false;
+bool ducking = false;
+bool grounded = true;
 
 
 #pragma region Win32 Entry Point (WinMain)
@@ -174,7 +176,6 @@ void MyDemoGame::CreateGeometry()
 	GameEntity* skyBox = new GameEntity(sphere, materials[1], true);
 
 	platforms.push_back(ground);
-	//platforms.push_back(ground);
     entities.push_back(person);
 	entities.push_back(skyBox);
 	
@@ -188,7 +189,7 @@ void MyDemoGame::CreateGeometry()
 		totPlatforms++;
 	}
 
-	pData = playerData{ float3{0.0f, -1.0f, -3.0f}, float3{0.0f,0.0f,1.0f},true,float3{0.0f,0.0f,2.0f} };
+	pData = playerData{ float3{0.0f, -1.0f, -2.0f}, float3{0.0f,0.0f,1.0f},float3{0.0f,0.0f,2.0f} };
 
 	srand(time(NULL));
 
@@ -392,6 +393,27 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 		}
 		DTrigger = false;
 	}
+	if ((GetKeyState('W') & 0x8000) && grounded) {
+		pData.forces.y = 0.4f;
+		grounded = false;
+	}
+	if (GetKeyState('S') & 0x8000) {
+		ducking = true;
+		entities[0]->SetRotation(0, 0, (-3.14f / 2.0f));
+	}
+	if (!grounded && !(GetKeyState('W') & 0x8000) && pData.position.y <= -1.0) {
+		grounded = true;
+		pData.forces.y = 0.0f;
+	}
+	if (ducking && !(GetKeyState('S') & 0x8000)) {
+		ducking = false;
+		entities[0]->SetRotation(0, 0, 0);
+	}
+
+	if (!grounded)
+	{
+		pData.forces.y -= 0.35f * deltaTime;
+	}
     
 	for (int i = 0; i < collectibles.size(); i++)
 	{
@@ -458,8 +480,50 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 		platforms[1]->SetPosition(0.0f, -2.0f, 2.5f + (15.0f*totPlatforms));
 		platforms[1]->SetScale(3.0f, 2.0f, 15.0f);
 		platforms[1]->UpdateWorldMatrix();
+		int obstacleChance = rand() % 3;
+		int obstaclePosition = rand() % 2;
+		if (obstacleChance == 0)
+		{
+			GameEntity* obs = new GameEntity(meshes[1], materials[0], false);
+			obs->SetScale(3.0f, 0.2f, 0.2f);
+			switch (obstaclePosition)
+			{
+				case 0:
+					obs->SetPosition(0.0f, -0.9f, 2.5f + (15.0f*totPlatforms));
+					break;
+				case 1:
+					obs->SetPosition(0.0f, -0.1f, 2.5f + (15.0f*totPlatforms));
+					break;
+				default:
+					obs->SetPosition(0.0f, -0.1f, 2.5f + (15.0f*totPlatforms));
+					break;
+			}
+			obstacles.push_back(obs);
+		}
 		totPlatforms++;
 	}
+
+	for (int i = 0; i < obstacles.size(); i++)
+	{
+		if (obstacles[i]->position.z <= pData.position.z && obstacles[i]->position.z >= (pData.position.z - 0.05f))
+		{
+			if (obstacles[i]->position.y == -0.1 && grounded)
+			{
+				//Game Over
+			}
+			if (obstacles[i]->position.y == -0.9 && !ducking)
+			{
+				//Game Over
+			}
+		}
+		if (obstacles[i]->position.z <= (pData.position.z - 1.0f))
+		{
+			obstacles.erase(obstacles.begin() + i);
+			i--;
+		}
+
+	}
+
 	if (platforms.size() == 2)
 	{
 		if (platforms[1]->position.z < pData.position.z)
@@ -536,6 +600,18 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
 
 		collectibles[i]->Draw(deviceContext, camera->GetView(), camera->GetProjection());
+	}
+	for (int i = 0; i < obstacles.size(); i++)
+	{
+		// Pass in some light data to the pixel shader
+		pixelShader->SetFloat3("DirLightDirection", XMFLOAT3(0, -1, 0));
+		pixelShader->SetFloat4("DirLightColor", XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+
+		pixelShader->SetFloat3("PointLightPosition", XMFLOAT3(0, 2, 0));
+		pixelShader->SetFloat4("PointLightColor", XMFLOAT4(0.3f, 0.3f, 1.0f, 0.0f));
+		pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
+
+		obstacles[i]->Draw(deviceContext, camera->GetView(), camera->GetProjection());
 	}
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;

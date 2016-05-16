@@ -1,15 +1,17 @@
-﻿Build started 4/28/2016 12:27:22 AM.
+﻿Build started 5/16/2016 6:24:28 PM.
      1>Project "C:\Users\Joe\Documents\GitHub\CyberRun\Cyber-Run\DirectX11_Starter\DirectX11_Starter.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /I"C:\Users\Joe\Documents\GitHub\CyberRun\Cyber-Run\packages\directxtk_desktop_2015.2015.7.29.1\build\native\../../build/native/include/" /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D HAS_DIRECTXTK /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt MyDemoGame.cpp
          MyDemoGame.cpp
-     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(183): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(193): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(396): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(504): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(516): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(528): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(553): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(184): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(194): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(418): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(506): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(568): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(580): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(592): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(604): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\joe\documents\github\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(629): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Joe\Documents\GitHub\CyberRun\Cyber-Run\Debug\DirectX11_Starter.exe" /INCREMENTAL /NOLOGO "C:\Users\Joe\Documents\GitHub\CyberRun\Cyber-Run\packages\directxtk_desktop_2015.2015.7.29.1\build\native\../../build/native/lib/Win32/Debug/DirectXTKAudioDX.lib" "C:\Users\Joe\Documents\GitHub\CyberRun\Cyber-Run\packages\directxtk_desktop_2015.2015.7.29.1\build\native\../../build/native/lib/Win32/Debug/DirectXTK.lib" d3d11.lib d3dcompiler.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"C:\Users\Joe\Documents\GitHub\CyberRun\Cyber-Run\Debug\DirectX11_Starter.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Joe\Documents\GitHub\CyberRun\Cyber-Run\Debug\DirectX11_Starter.lib" /MACHINE:X86 Debug\Camera.obj
          Debug\GameEntity.obj
@@ -24,4 +26,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:08.56
+Time Elapsed 00:00:10.28
