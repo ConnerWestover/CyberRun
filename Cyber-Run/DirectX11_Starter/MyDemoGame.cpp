@@ -762,6 +762,7 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 	// HUD IMAGES
 	GUI::DrawImage("topbar", 0, 0, 1000, 55);
 
+	// TEXT - Has to come after draw
 	if (GameOver) {
 		GUI::BeginStringDraw();
 		GUI::DrawString("fixedsys", 300, 250, L"Game Over");
@@ -769,10 +770,11 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		GUI::EndStringDraw();
 	}
 	else {
-		// TEXT - Has to come after draw
+		std::wstring string_score = std::to_wstring(score);
+		while (string_score.size() < 8) string_score = L"0" + string_score;
+
 		GUI::BeginStringDraw();
-		GUI::DrawString("fixedsys", 0, 0, L"Score: ");
-		GUI::DrawString("fixedsys", 75, 0, to_wstring(score).c_str());
+		GUI::DrawString("fixedsys", 0, 0, (L"Score: " + string_score).c_str());
 		GUI::EndStringDraw();
 	}
 
