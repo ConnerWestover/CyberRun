@@ -57,11 +57,9 @@ void Camera::Rotate(float x, float y)
 // Camera's update, which looks for key presses
 void Camera::Update(float dt)
 {
-    // Current speed
-	float speed = dt * 3;
 
     // Speed up when shift is pressed
-	if (GetAsyncKeyState(VK_SHIFT)) { speed *= 5; }
+	//if (GetAsyncKeyState(VK_SHIFT)) { speed *= 5; }
 
     // Movement
 	/*if (GetAsyncKeyState('W') & 0x8000) { MoveRelative(0, 0, speed); }
@@ -70,6 +68,8 @@ void Camera::Update(float dt)
 	if (GetAsyncKeyState('D') & 0x8000) { MoveRelative(speed, 0, 0); }
 	if (GetAsyncKeyState('X') & 0x8000) { MoveAbsolute(0, -speed, 0); }
 	if (GetAsyncKeyState(' ') & 0x8000) { MoveAbsolute(0, speed, 0); }*/
+
+	MoveRelative(0, 0, speed*dt);
 
     // Check for reset
     if (GetAsyncKeyState('R') & 0x8000)
@@ -108,4 +108,9 @@ void Camera::UpdateProjectionMatrix(float aspectRatio)
 		0.1f,						// Near clip plane distance
 		100.0f);					// Far clip plane distance
 	XMStoreFloat4x4(&projMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
+}
+
+void Camera::setSpeed(float _speed)
+{
+	speed = _speed;
 }

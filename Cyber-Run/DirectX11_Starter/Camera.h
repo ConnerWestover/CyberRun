@@ -22,6 +22,7 @@ public:
 	DirectX::XMFLOAT3 GetPosition() { return position; }
 	DirectX::XMFLOAT4X4 GetView() { return viewMatrix; }
 	DirectX::XMFLOAT4X4 GetProjection() { return projMatrix; }
+	void setSpeed(float _speed);
 
 private:
     // Camera matrices
@@ -34,5 +35,6 @@ private:
 	DirectX::XMFLOAT4 rotation;
 	float xRotation;
 	float yRotation;
+	float speed;
 };
 

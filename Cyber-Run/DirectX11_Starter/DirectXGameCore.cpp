@@ -402,13 +402,13 @@ void DirectXGameCore::CalculateFrameStats()
 		std::wostringstream outs;   
 		outs.precision(6);
 		outs << windowCaption << L"    "
-			<< L"Width: " << windowWidth << L"    "
-			<< L"Height: " << windowHeight << L"    "
-			<< L"FPS: " << fps << L"    " 
-			<< L"Frame Time: " << mspf << L"ms";
+			/*<< L"Width: " << windowWidth << L"    "
+			<< L"Height: " << windowHeight << L"    "*/
+			<< L"FPS: " << fps << L"    ";
+			/*<< L"Frame Time: " << mspf << L"ms";*/
 
 		// Include feature level
-		switch(featureLevel)
+		/*switch(featureLevel)
 		{
 		case D3D_FEATURE_LEVEL_11_1: outs << "    DX 11.1"; break;
 		case D3D_FEATURE_LEVEL_11_0: outs << "    DX 11.0"; break;
@@ -418,7 +418,7 @@ void DirectXGameCore::CalculateFrameStats()
 		case D3D_FEATURE_LEVEL_9_2:  outs << "    DX 9.2";  break;
 		case D3D_FEATURE_LEVEL_9_1:  outs << "    DX 9.1";  break;
 		default:                     outs << "    DX ???";  break;
-		}
+		}*/
 
 		SetWindowText(hMainWnd, outs.str().c_str());
 

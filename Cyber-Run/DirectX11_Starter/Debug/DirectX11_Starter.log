@@ -1,3 +1,0 @@
-﻿  GUI.cpp
-c:\users\gwen\documents\visual studio 2015\projects\cyberrun\cyber-run\directx11_starter\gui.cpp(83): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-  DirectX11_Starter.vcxproj -> C:\Users\Gwen\Documents\Visual Studio 2015\Projects\CyberRun\Cyber-Run\Debug\DirectX11_Starter.exe
