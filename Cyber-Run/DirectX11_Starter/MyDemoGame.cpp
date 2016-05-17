@@ -116,6 +116,8 @@ MyDemoGame::~MyDemoGame()
 	depthState->Release();
 	rasterState->Release();
 
+	GUI::Destroy();
+
 	ppRTV->Release();
 	ppSRV->Release();
 }
@@ -309,6 +311,9 @@ void MyDemoGame::LoadShaders()
 	materials.push_back(mainMat);
 	materials.push_back(skyMat);
 	materials.push_back(postProcMat);
+
+	// gui
+	GUI::Create(device, deviceContext);
 }
 
 // --------------------------------------------------------
@@ -449,6 +454,8 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
+	
+
 	//POST-PROCESSING
 	// Done with "regular" rendering - swap to post process
 	deviceContext->OMSetRenderTargets(1, &renderTargetView, 0);
@@ -466,6 +473,8 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 	ppPS->SetSamplerState("trilinear", sampler);
 	ppPS->SetShader();
 
+	
+
 	// Turn off existing vert/index buffers
 	ID3D11Buffer* nothing = 0;
 	deviceContext->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
@@ -474,9 +483,23 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 	// Finally - DRAW!
 	deviceContext->Draw(3, 0);
 
+
+	// HUD IMAGES
+	GUI::DrawImage("topbar", 0, 0, 1000, 55);
+
+	// TEXT - Has to come after draw
+	GUI::BeginStringDraw();
+	GUI::DrawString("fixedsys", 0, 0, L"Score: 0000000");
+	GUI::EndStringDraw();
+
+	
+
 	// Unbind the SRV so the underlying texture isn't bound for
 	// both input and output at the start of next frame
 	ppPS->SetShaderResourceView("pixels", 0);
+
+	
+
 	// Present the buffer
 	//  - Puts the image we're drawing into the window so the user can see it
 	//  - Do this exactly ONCE PER FRAME

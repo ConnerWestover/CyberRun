@@ -1,6 +1,3 @@
-﻿  MyDemoGame.cpp
-c:\users\ferre\documents\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(392): warning C4018: '<': signed/unsigned mismatch
-c:\users\ferre\documents\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(432): warning C4018: '<': signed/unsigned mismatch
-c:\users\ferre\documents\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(444): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-c:\users\ferre\documents\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(462): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-  DirectX11_Starter.vcxproj -> C:\Users\ferre\Documents\CyberRun\Cyber-Run\Debug\DirectX11_Starter.exe
+﻿  GUI.cpp
+c:\users\gwen\documents\visual studio 2015\projects\cyberrun\cyber-run\directx11_starter\gui.cpp(83): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  DirectX11_Starter.vcxproj -> C:\Users\Gwen\Documents\Visual Studio 2015\Projects\CyberRun\Cyber-Run\Debug\DirectX11_Starter.exe

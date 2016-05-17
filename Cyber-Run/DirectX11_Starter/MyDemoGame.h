@@ -8,6 +8,8 @@
 #include "Camera.h"
 #include "GameEntity.h"
 
+#include "GUI.h"
+
 #include <vector>
 
 // Include run-time memory checking in debug builds, so 
