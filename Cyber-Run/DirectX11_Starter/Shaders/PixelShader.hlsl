@@ -15,7 +15,9 @@ cbuffer LightData : register(b0)
 	float pixelWidth;
 	float pixelHeight;
 	float blurAmount;
-	float bloomAmount;
+	float bloomAmountX;
+	float bloomAmountY;
+	float bloomAmountZ;
 }
 
 
@@ -94,10 +96,10 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float4 surfaceColor = (PointLightColor * pointNdotL * diffuseColor)* (PointLightColor.w*10.0f) + (DirLightColor * dirNdotL * diffuseColor)* (DirLightColor.w*10.0f) + float4(spec.xxx, 1);
 
 	if (surfaceColor.x + surfaceColor.y + surfaceColor.z > 1.5f) {
-		surfaceColor.x += bloomAmount;
-		surfaceColor.y += bloomAmount;
-		surfaceColor.z += bloomAmount;
-
+		surfaceColor = float4(surfaceColor.x + bloomAmountX,
+			surfaceColor.y + bloomAmountY,
+			surfaceColor.z + bloomAmountZ,
+			0);
 	}
 
 	return lerp(reflectionColor, surfaceColor, 1.0f);

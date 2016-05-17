@@ -1,0 +1,17 @@
+﻿  MyDemoGame.cpp
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(200): warning C4018: '<': signed/unsigned mismatch
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(210): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(476): warning C4018: '<': signed/unsigned mismatch
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(564): warning C4018: '<': signed/unsigned mismatch
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(634): warning C4018: '<': signed/unsigned mismatch
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(646): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(653): warning C4018: '<': signed/unsigned mismatch
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(665): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(672): warning C4018: '<': signed/unsigned mismatch
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(684): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(691): warning C4018: '<': signed/unsigned mismatch
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(703): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(710): warning C4018: '<': signed/unsigned mismatch
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(722): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+c:\users\ferre\desktop\cyberrun\cyber-run\directx11_starter\mydemogame.cpp(744): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+  DirectX11_Starter.vcxproj -> C:\Users\ferre\Desktop\CyberRun\Cyber-Run\Debug\DirectX11_Starter.exe

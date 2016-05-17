@@ -31,7 +31,13 @@
 using namespace DirectX;
 using namespace std;
 
-float bloomAmount = 0;
+bool goingUpX = true;
+bool goingUpY = false;
+bool goingUpZ = true;
+bool GameOver = false;
+float bloomAmountX = .25f;
+float bloomAmountY = 0.0f;
+float bloomAmountZ = .5f;
 bool ATrigger = false;
 bool DTrigger = false;
 bool ducking = false;
@@ -118,7 +124,7 @@ MyDemoGame::~MyDemoGame()
 	depthState->Release();
 	rasterState->Release();
 
-	GUI::Destroy();
+	//GUI::Destroy();
 
 	ppRTV->Release();
 	ppSRV->Release();
@@ -150,6 +156,9 @@ bool MyDemoGame::Init()
 	// geometric primitives we'll be using and how to interpret them
 	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	// gui
+	GUI::Create(device, deviceContext);
+
 	// Successfully initialized
 	return true;
 }
@@ -159,30 +168,34 @@ bool MyDemoGame::Init()
 // --------------------------------------------------------
 void MyDemoGame::CreateGeometry()
 {
-    XMFLOAT4 red = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-    XMFLOAT4 green = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-    XMFLOAT4 blue = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
-    XMFLOAT4 yellow = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
+	XMFLOAT4 red = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+	XMFLOAT4 green = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+	XMFLOAT4 blue = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+	XMFLOAT4 yellow = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
 
-    
-    Mesh* player = new Mesh("cycle.obj", device, rasterState, depthState);
-    Mesh* floor = new Mesh("cube.obj", device, rasterState, depthState);
+
+	Mesh* player1 = new Mesh("helix.obj", device, rasterState, depthState);
+	Mesh* player2 = new Mesh("cycle.obj", device, rasterState, depthState);
+	Mesh* floor = new Mesh("cube.obj", device, rasterState, depthState);
 	Mesh* sphere = new Mesh("sphere.obj", device, rasterState, depthState);
 
-    meshes.push_back(player);
-    meshes.push_back(floor);
+	meshes.push_back(player1);
+	meshes.push_back(player2);
+	meshes.push_back(floor);
 	meshes.push_back(sphere);
 
-    // Make some entities
-    GameEntity* person = new GameEntity(player, materials[0], false);
-    GameEntity* ground = new GameEntity(floor, materials[0], false);
+	// Make some entities
+	GameEntity* person1 = new GameEntity(player1, materials[0], false);
+	GameEntity* person2 = new GameEntity(player2, materials[0], false);
+	GameEntity* ground = new GameEntity(floor, materials[0], false);
 	GameEntity* skyBox = new GameEntity(sphere, materials[1], true);
 
 	platforms.push_back(ground);
-    entities.push_back(person);
+	entities.push_back(person1);
+	entities.push_back(person2);
 	entities.push_back(skyBox);
-	
-	entities[0]->SetScale(.05f, .05f, .05f);
+
+	entities[1]->SetScale(.05f, .05f, .05f);
 
 	for (int i = 0; i < platforms.size(); i++)
 	{
@@ -192,29 +205,29 @@ void MyDemoGame::CreateGeometry()
 		totPlatforms++;
 	}
 
-	pData = playerData{ float3{0.0f, -1.0f, -2.0f}, float3{0.0f,0.0f,1.0f},float3{0.0f,0.0f,2.0f} };
+	pData = playerData{ float3{ 0.0f, -1.0f, -2.0f }, float3{ 0.0f,0.0f,1.0f },float3{ 0.0f,0.0f,2.0f } };
 
 	srand(time(NULL));
 
 	for (int i = 0; i < 5; i++)
-	{	
+	{
 		GameEntity* collectMe = new GameEntity(sphere, materials[0], false);
 		collectMe->SetScale(0.1f, 0.1f, 0.1f);
 		int x = rand() % 3;
 		switch (x)
 		{
-			case 0:
-				collectMe->SetPosition(-.75f, -0.5f, 2.0f * i);
-				break;
-			case 1:
-				collectMe->SetPosition(0.0f, -0.5f, 2.0f * i);
-				break;
-			case 2:
-				collectMe->SetPosition(.75f, -0.5f, 2.0f * i);
-				break;
-			default:
-				collectMe->SetPosition(0.0f, -0.5f, 2.0f * i);
-				break;
+		case 0:
+			collectMe->SetPosition(-.75f, -0.5f, 2.0f * i);
+			break;
+		case 1:
+			collectMe->SetPosition(0.0f, -0.5f, 2.0f * i);
+			break;
+		case 2:
+			collectMe->SetPosition(.75f, -0.5f, 2.0f * i);
+			break;
+		default:
+			collectMe->SetPosition(0.0f, -0.5f, 2.0f * i);
+			break;
 		}
 		collectibles.push_back(collectMe);
 		totCollects++;
@@ -246,20 +259,20 @@ void MyDemoGame::LoadShaders()
 	ppPS = new SimplePixelShader(device, deviceContext);
 	ppPS->LoadShaderFile(L"BlurPS.cso");
 
-    // Set up texture stuff
-    DirectX::CreateWICTextureFromFile(device, deviceContext, L"grid.jpg", 0, &texture);
+	// Set up texture stuff
+	DirectX::CreateWICTextureFromFile(device, deviceContext, L"grid.jpg", 0, &texture);
 	DirectX::CreateWICTextureFromFile(device, deviceContext, L"gridNormals.jpg", 0, &normalMap);
 	DirectX::CreateDDSTextureFromFile(device, deviceContext, L"SunnyCubeMap.dds", 0, &skyTexture);
 
-    // Create the sampler
-    D3D11_SAMPLER_DESC samplerDesc;
-    ZeroMemory(&samplerDesc, sizeof(samplerDesc));
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-    device->CreateSamplerState(&samplerDesc, &sampler);
+	// Create the sampler
+	D3D11_SAMPLER_DESC samplerDesc;
+	ZeroMemory(&samplerDesc, sizeof(samplerDesc));
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	device->CreateSamplerState(&samplerDesc, &sampler);
 
 	// Create the sky rasterizer state
 	D3D11_RASTERIZER_DESC rastDesc = {};
@@ -305,7 +318,7 @@ void MyDemoGame::LoadShaders()
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Format = tDesc.Format;
 	srvDesc.Texture2D.MipLevels = 1;
-	srvDesc.Texture2D.MostDetailedMip = 0; 
+	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	device->CreateShaderResourceView(ppTexture, &srvDesc, &ppSRV);
 
@@ -329,9 +342,6 @@ void MyDemoGame::LoadShaders()
 	materials.push_back(mainMat);
 	materials.push_back(skyMat);
 	materials.push_back(postProcMat);
-
-	// gui
-	GUI::Create(device, deviceContext);
 }
 
 // --------------------------------------------------------
@@ -375,71 +385,131 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 	// Quit if the escape key is pressed
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
-
-	entities[0]->SetPosition(pData.position.x, pData.position.y, pData.position.z);
-	entities[0]->SetScale(0.5f, 0.5f, 0.5f);
-	entities[0]->SetRotation(-3.14f / 2.0f, 0.0f, -3.14f / 2.0f);
-	entities[0]->UpdateWorldMatrix();
-
-	if (GetKeyState('A') & 0x8000) { 
-		ATrigger = true;
-	}
-	if (ATrigger && !(GetKeyState('A') & 0x8000)) {
-		pData.position.x = (pData.position.x - .75f);
-		if (pData.position.x <= -.75f) {
-			pData.position.x = -.75f;
+	if (!GameOver) {
+		if (goingUpX) {
+			bloomAmountX += .001f;
+			if (bloomAmountX > .75f) {
+				goingUpX = false;
+			}
 		}
-		ATrigger = false;
-	}
-	if (GetKeyState('D') & 0x8000) {
-		DTrigger = true;
-	}
-	if (DTrigger && !(GetKeyState('D') & 0x8000)) {
-		pData.position.x = (pData.position.x + .75f);
-		if (pData.position.x >= .75f) {
-			pData.position.x = .75f;
+		else {
+			bloomAmountX -= .001f;
+			if (bloomAmountX < -.25f) {
+				goingUpX = true;
+			}
 		}
-		DTrigger = false;
-	}
-	if ((GetKeyState('Q') & 0x8000)) {
-		bloomAmount = (bloomAmount + .01f);
-	}
-	if ((GetKeyState('E') & 0x8000)) {
-		bloomAmount = (bloomAmount - .01f);
-	}
 
-	if ((GetKeyState('W') & 0x8000) && grounded) {
-		pData.forces.y = 0.4f;
-		grounded = false;
-	}
-	if (GetKeyState('S') & 0x8000) {
-		ducking = true;
-		entities[0]->SetRotation(0, (-3.14f / 2.0f),0);
-	}
-	if (!grounded && !(GetKeyState('W') & 0x8000) && pData.position.y <= -1.0) {
-		grounded = true;
-		pData.forces.y = 0.0f;
-	}
-	if (ducking && !(GetKeyState('S') & 0x8000)) {
-		ducking = false;
-		entities[0]->SetRotation(0, 0, 0);
-	}
+		if (goingUpY) {
+			bloomAmountY += .001f;
+			if (bloomAmountY > .75f) {
+				goingUpY = false;
+			}
+		}
+		else {
+			bloomAmountY -= .001f;
+			if (bloomAmountY < -.25f) {
+				goingUpY = true;
+			}
+		}
 
-	if (!grounded)
-	{
-		pData.forces.y -= 0.35f * deltaTime;
-	}
-    
-	for (int i = 0; i < collectibles.size(); i++)
-	{
-		if (collectibles[i]->position.z <= pData.position.z && collectibles[i]->position.z >= (pData.position.z - 0.05f))
+		if (goingUpZ) {
+			bloomAmountZ += .001f;
+			if (bloomAmountZ > .75f) {
+				goingUpZ = false;
+			}
+		}
+		else {
+			bloomAmountZ -= .001f;
+			if (bloomAmountZ < -.25f) {
+				goingUpZ = true;
+			}
+		}
+
+		entities[1]->SetPosition(pData.position.x, pData.position.y, pData.position.z);
+		entities[1]->SetScale(0.5f, 0.5f, 0.5f);
+		entities[1]->SetRotation(-3.14f / 2.0f, 0.0f, -3.14f / 2.0f);
+		entities[1]->UpdateWorldMatrix();
+
+		if (GetKeyState('A') & 0x8000) {
+			ATrigger = true;
+		}
+		if (ATrigger && !(GetKeyState('A') & 0x8000)) {
+			pData.position.x = (pData.position.x - .75f);
+			if (pData.position.x <= -.75f) {
+				pData.position.x = -.75f;
+			}
+			ATrigger = false;
+		}
+		if (GetKeyState('D') & 0x8000) {
+			DTrigger = true;
+		}
+		if (DTrigger && !(GetKeyState('D') & 0x8000)) {
+			pData.position.x = (pData.position.x + .75f);
+			if (pData.position.x >= .75f) {
+				pData.position.x = .75f;
+			}
+			DTrigger = false;
+		}
+		
+		if ((GetKeyState('W') & 0x8000) && grounded) {
+			pData.forces.y = 0.4f;
+			grounded = false;
+		}
+		if (GetKeyState('S') & 0x8000) {
+			ducking = true;
+			entities[1]->SetRotation(0, (-3.14f / 2.0f), 0);
+		}
+		if (!grounded && !(GetKeyState('W') & 0x8000) && pData.position.y <= -1.0) {
+			grounded = true;
+			pData.forces.y = 0.0f;
+		}
+		if (ducking && !(GetKeyState('S') & 0x8000)) {
+			ducking = false;
+			entities[1]->SetRotation(0, 0, 0);
+		}
+
+		if (!grounded)
 		{
-			if (collectibles[i]->position.x == pData.position.x)
+			pData.forces.y -= 0.35f * deltaTime;
+		}
+
+		for (int i = 0; i < collectibles.size(); i++)
+		{
+			if (collectibles[i]->position.z <= pData.position.z && collectibles[i]->position.z >= (pData.position.z - 0.05f))
+			{
+				if (collectibles[i]->position.x == pData.position.x)
+				{
+					collectibles.erase(collectibles.begin() + i);
+					i--;
+					score++;
+					GameEntity* collectMe = new GameEntity(meshes[3], materials[0], false);
+					collectMe->SetScale(0.1f, 0.1f, 0.1f);
+					int x = rand() % 3;
+					switch (x)
+					{
+					case 0:
+						collectMe->SetPosition(-.75f, -0.5f, 2.0f * totCollects);
+						break;
+					case 1:
+						collectMe->SetPosition(0.0f, -0.5f, 2.0f * totCollects);
+						break;
+					case 2:
+						collectMe->SetPosition(.75f, -0.5f, 2.0f * totCollects);
+						break;
+					default:
+						collectMe->SetPosition(0.0f, -0.5f, 2.0f * totCollects);
+						break;
+					}
+					collectibles.push_back(collectMe);
+					totCollects++;
+				}
+				continue;
+			}
+			if (collectibles[i]->position.z <= (pData.position.z - 1.0f))
 			{
 				collectibles.erase(collectibles.begin() + i);
 				i--;
-				score++;
-				GameEntity* collectMe = new GameEntity(meshes[2], materials[0], false);
+				GameEntity* collectMe = new GameEntity(meshes[3], materials[0], false);
 				collectMe->SetScale(0.1f, 0.1f, 0.1f);
 				int x = rand() % 3;
 				switch (x)
@@ -460,49 +530,22 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 				collectibles.push_back(collectMe);
 				totCollects++;
 			}
-			continue;
 		}
-		if (collectibles[i]->position.z <= (pData.position.z - 1.0f))
-		{
-			collectibles.erase(collectibles.begin() + i);
-			i--;
-			GameEntity* collectMe = new GameEntity(meshes[2], materials[0], false);
-			collectMe->SetScale(0.1f, 0.1f, 0.1f);
-			int x = rand() % 3;
-			switch (x)
-			{
-			case 0:
-				collectMe->SetPosition(-.75f, -0.5f, 2.0f * totCollects);
-				break;
-			case 1:
-				collectMe->SetPosition(0.0f, -0.5f, 2.0f * totCollects);
-				break;
-			case 2:
-				collectMe->SetPosition(.75f, -0.5f, 2.0f * totCollects);
-				break;
-			default:
-				collectMe->SetPosition(0.0f, -0.5f, 2.0f * totCollects);
-				break;
-			}
-			collectibles.push_back(collectMe);
-			totCollects++;
-		}
-	}
 
-	if (platforms[0]->position.z - 2.5 <= pData.position.z && platforms.size() == 1)
-	{
-		platforms.push_back(new GameEntity(meshes[1], materials[0], false));
-		platforms[1]->SetPosition(0.0f, -2.0f, 2.5f + (15.0f*totPlatforms));
-		platforms[1]->SetScale(3.0f, 2.0f, 15.0f);
-		platforms[1]->UpdateWorldMatrix();
-		int obstacleChance = rand() % 3;
-		int obstaclePosition = rand() % 2;
-		if (obstacleChance == 0)
+		if (platforms[0]->position.z - 2.5 <= pData.position.z && platforms.size() == 1)
 		{
-			GameEntity* obs = new GameEntity(meshes[1], materials[0], false);
-			obs->SetScale(3.0f, 0.2f, 0.2f);
-			switch (obstaclePosition)
+			platforms.push_back(new GameEntity(meshes[2], materials[0], false));
+			platforms[1]->SetPosition(0.0f, -2.0f, 2.5f + (15.0f*totPlatforms));
+			platforms[1]->SetScale(3.0f, 2.0f, 15.0f);
+			platforms[1]->UpdateWorldMatrix();
+			int obstacleChance = rand() % 3;
+			int obstaclePosition = rand() % 2;
+			if (obstacleChance == 0)
 			{
+				GameEntity* obs = new GameEntity(meshes[2], materials[0], false);
+				obs->SetScale(3.0f, 0.2f, 0.2f);
+				switch (obstaclePosition)
+				{
 				case 0:
 					obs->SetPosition(0.0f, -0.9f, 2.5f + (15.0f*totPlatforms));
 					break;
@@ -512,52 +555,60 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 				default:
 					obs->SetPosition(0.0f, -0.1f, 2.5f + (15.0f*totPlatforms));
 					break;
+				}
+				obstacles.push_back(obs);
 			}
-			obstacles.push_back(obs);
+			totPlatforms++;
 		}
-		totPlatforms++;
-	}
 
-	for (int i = 0; i < obstacles.size(); i++)
-	{
-		if (obstacles[i]->position.z <= pData.position.z && obstacles[i]->position.z >= (pData.position.z - 0.05f))
+		for (int i = 0; i < obstacles.size(); i++)
 		{
-			if (obstacles[i]->position.y == -0.1 && grounded)
+			if (obstacles[i]->position.z <= pData.position.z && obstacles[i]->position.z >= (pData.position.z - 0.05f))
 			{
-				//Game Over
+				if (obstacles[i]->position.y <= 0.0f && obstacles[i]->position.y >= -0.2f && !ducking)
+				{
+					GameOver = true;
+				}
+				if (obstacles[i]->position.y <= -0.8f && obstacles[i]->position.y >= -1.0f && grounded)
+				{
+					GameOver = true;
+				}
 			}
-			if (obstacles[i]->position.y == -0.9 && !ducking)
+			if (obstacles[i]->position.z <= (pData.position.z - 1.0f))
 			{
-				//Game Over
+				obstacles.erase(obstacles.begin() + i);
+				i--;
+			}
+
+		}
+
+		if (platforms.size() == 2)
+		{
+			if (platforms[1]->position.z < pData.position.z)
+			{
+				platforms.erase(platforms.begin());
 			}
 		}
-		if (obstacles[i]->position.z <= (pData.position.z - 1.0f))
-		{
-			obstacles.erase(obstacles.begin() + i);
-			i--;
-		}
 
+		pData.position.add(pData.forces.mult(deltaTime));
+
+		// Update the camera
+		camera->Update(deltaTime);
+
+		//string orig = "CyberRun    Score: " + score;
+		/*
+		const size_t newsizew = strlen(orig.c_str()) + 1;
+		size_t convertedChars = 0;
+		wchar_t *wcstring = new wchar_t[newsizew];
+		mbstowcs_s(&convertedChars, wcstring, newsizew, orig.c_str(), _TRUNCATE);*/
 	}
-
-	if (platforms.size() == 2)
-	{
-		if (platforms[1]->position.z < pData.position.z)
-		{
-			platforms.erase(platforms.begin());
+	else {
+		if ((GetKeyState('P') & 0x8000)) {
+			GameOver = false;
+			score = 0;
+			
 		}
 	}
-
-	pData.position.add(pData.forces.mult(deltaTime));
-
-	// Update the camera
-	camera->Update(deltaTime);
-
-	//string orig = "CyberRun    Score: " + score;
-	/*
-	const size_t newsizew = strlen(orig.c_str()) + 1;
-	size_t convertedChars = 0;
-	wchar_t *wcstring = new wchar_t[newsizew];
-	mbstowcs_s(&convertedChars, wcstring, newsizew, orig.c_str(), _TRUNCATE);*/
 }
 
 // --------------------------------------------------------
@@ -593,7 +644,28 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		pixelShader->SetFloat("pixelWidth", 1.0f / windowWidth);
 		pixelShader->SetFloat("pixelHeight", 1.0f / windowHeight);
 		pixelShader->SetInt("blurAmount", 1.0f);
-		pixelShader->SetFloat("bloomAmount", .3f);
+		pixelShader->SetFloat("bloomAmountX", bloomAmountX);
+		pixelShader->SetFloat("bloomAmountY", bloomAmountY);
+		pixelShader->SetFloat("bloomAmountZ", bloomAmountZ);
+
+		entities[i]->Draw(deviceContext, camera->GetView(), camera->GetProjection());
+	}
+	for (int i = 1; i < entities.size(); i++)
+	{
+		// Pass in some light data to the pixel shader
+		pixelShader->SetFloat3("DirLightDirection", XMFLOAT3(0, -1, 0));
+		pixelShader->SetFloat4("DirLightColor", XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+
+		pixelShader->SetFloat3("PointLightPosition", XMFLOAT3(0, 2, 0));
+		pixelShader->SetFloat4("PointLightColor", XMFLOAT4(0.3f, 0.3f, 1.0f, 0.0f));
+		pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
+
+		pixelShader->SetFloat("pixelWidth", 1.0f / windowWidth);
+		pixelShader->SetFloat("pixelHeight", 1.0f / windowHeight);
+		pixelShader->SetInt("blurAmount", 1.0f);
+		pixelShader->SetFloat("bloomAmountX", bloomAmountX);
+		pixelShader->SetFloat("bloomAmountY", bloomAmountY);
+		pixelShader->SetFloat("bloomAmountZ", bloomAmountZ);
 
 		entities[i]->Draw(deviceContext, camera->GetView(), camera->GetProjection());
 	}
@@ -607,6 +679,13 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		pixelShader->SetFloat4("PointLightColor", XMFLOAT4(0.3f, 0.3f, 1.0f, 0.0f));
 		pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
 
+		pixelShader->SetFloat("pixelWidth", 1.0f / windowWidth);
+		pixelShader->SetFloat("pixelHeight", 1.0f / windowHeight);
+		pixelShader->SetInt("blurAmount", 1.0f);
+		pixelShader->SetFloat("bloomAmountX", bloomAmountX);
+		pixelShader->SetFloat("bloomAmountY", bloomAmountZ);
+		pixelShader->SetFloat("bloomAmountZ", bloomAmountY);
+
 		platforms[i]->Draw(deviceContext, camera->GetView(), camera->GetProjection());
 	}
 	for (int i = 0; i < collectibles.size(); i++)
@@ -619,6 +698,13 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		pixelShader->SetFloat4("PointLightColor", XMFLOAT4(0.3f, 0.3f, 1.0f, 0.0f));
 		pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
 
+		pixelShader->SetFloat("pixelWidth", 1.0f / windowWidth);
+		pixelShader->SetFloat("pixelHeight", 1.0f / windowHeight);
+		pixelShader->SetInt("blurAmount", 1.0f);
+		pixelShader->SetFloat("bloomAmountX", bloomAmountZ);
+		pixelShader->SetFloat("bloomAmountY", bloomAmountX);
+		pixelShader->SetFloat("bloomAmountZ", bloomAmountY);
+
 		collectibles[i]->Draw(deviceContext, camera->GetView(), camera->GetProjection());
 	}
 	for (int i = 0; i < obstacles.size(); i++)
@@ -630,6 +716,13 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		pixelShader->SetFloat3("PointLightPosition", XMFLOAT3(0, 2, 0));
 		pixelShader->SetFloat4("PointLightColor", XMFLOAT4(0.3f, 0.3f, 1.0f, 0.0f));
 		pixelShader->SetFloat3("CameraPosition", camera->GetPosition());
+
+		pixelShader->SetFloat("pixelWidth", 1.0f / windowWidth);
+		pixelShader->SetFloat("pixelHeight", 1.0f / windowHeight);
+		pixelShader->SetInt("blurAmount", 1.0f);
+		pixelShader->SetFloat("bloomAmountX", bloomAmountY);
+		pixelShader->SetFloat("bloomAmountY", bloomAmountZ);
+		pixelShader->SetFloat("bloomAmountZ", bloomAmountX);
 
 		obstacles[i]->Draw(deviceContext, camera->GetView(), camera->GetProjection());
 	}
@@ -669,10 +762,19 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 	// HUD IMAGES
 	GUI::DrawImage("topbar", 0, 0, 1000, 55);
 
-	// TEXT - Has to come after draw
-	GUI::BeginStringDraw();
-	GUI::DrawString("fixedsys", 0, 0, L"Score: 0000000");
-	GUI::EndStringDraw();
+	if (GameOver) {
+		GUI::BeginStringDraw();
+		GUI::DrawString("fixedsys", 300, 250, L"Game Over");
+		GUI::DrawString("fixedsys", 300, 300, L"Press 'P' To Play Again");
+		GUI::EndStringDraw();
+	}
+	else {
+		// TEXT - Has to come after draw
+		GUI::BeginStringDraw();
+		GUI::DrawString("fixedsys", 0, 0, L"Score: ");
+		GUI::DrawString("fixedsys", 75, 0, to_wstring(score).c_str());
+		GUI::EndStringDraw();
+	}
 
 	
 
