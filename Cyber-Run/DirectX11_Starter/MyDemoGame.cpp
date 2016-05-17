@@ -475,7 +475,7 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 
 		for (int i = 0; i < collectibles.size(); i++)
 		{
-			if (collectibles[i]->position.z <= pData.position.z && collectibles[i]->position.z >= (pData.position.z - 0.05f))
+			if (collectibles[i]->position.z <= pData.position.z && collectibles[i]->position.z >= (pData.position.z - 1.0f))
 			{
 				if (collectibles[i]->position.x == pData.position.x)
 				{
@@ -590,10 +590,10 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 			}
 		}
 
-		pData.position.add(pData.forces.mult(deltaTime));
+		pData.position.add(pData.forces.mult(deltaTime * (1 + 0.05f * score)));
 
 		// Update the camera
-		camera->Update(deltaTime);
+		camera->Update(deltaTime, pData.position.z - 3);
 
 		//string orig = "CyberRun    Score: " + score;
 		/*
