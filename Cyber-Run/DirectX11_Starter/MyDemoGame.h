@@ -45,6 +45,34 @@ private:
     std::vector<Mesh*> meshes;
 	std::vector<Material*> materials;
     std::vector<GameEntity*> entities;
+	std::vector<GameEntity*> collectibles;
+	std::vector<GameEntity*> platforms;
+	std::vector<GameEntity*> obstacles;
+
+	struct float3 {
+		float x, y, z;
+		void add(float3 other) 
+		{
+			x += other.x;
+			y += other.y;
+			z += other.z;
+		}
+		float3 mult(float num)
+		{
+			return float3{ x*num, y*num, z*num };
+		}
+	};
+
+	struct playerData {
+		float3 position;
+		float3 forward;
+		float3 forces;
+	};
+
+	playerData pData;
+	int score = 0;
+	int totPlatforms = 0;
+	int totCollects = 0;
 
 	// Initialization for our "game" demo - Feel free to
 	// expand, alter, rename or remove these once you
